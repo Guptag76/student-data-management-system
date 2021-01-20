@@ -1,1 +1,247 @@
+from tkinter import *
+import tkinter
+from tkinter import messagebox
+import sqlite3
+#from tkinter.font import names
 
+
+####### for page creation ##########
+kishan=Tk()
+kishan.geometry("1200x550")
+kishan.config(bg="cadet blue")
+kishan.title("Guptag-->> data collector")
+
+
+##### for front page design ############
+Label(kishan,text="WELCOME",fg="dark blue",font="arial 35 bold",bg="cadet blue").place(x=460,y=0)
+
+Label(kishan,text="NOW YOU ARE IN THE DATA COLLECTOR",fg="dark red", font="arial 20 bold",bg="cadet blue").place(x=90,y=50)
+
+result_frame=Frame(kishan).place(x=700,y=200)
+p=Label(result_frame,text="SHOWING RESULT",fg="dark red",font="arial 20 bold",bg="cadet blue").place(x=830,y=50)
+
+
+Label(kishan,text="Name-->",font="arial 23 bold",bg="cadet blue").place(x=80,y=110)
+
+Label(kishan,text="Section-->",font="arial 23 bold",bg="cadet blue").place(x=80,y=160)
+
+Label(kishan,text="Roll-->",font="arial 23 bold",bg="cadet blue").place(x=80,y=210)
+
+Label(kishan,text="Mobile-->",font="arial 23 bold",bg="cadet blue").place(x=80,y=260)
+
+Label(kishan,text="Email-->",font="arial 23 bold",bg="cadet blue").place(x=80,y=310)
+
+Label(kishan,text="*Email is compulsary",font="arial 15 bold",bg="cadet blue",fg="dark red").place(x=280,y=350)
+
+
+
+################### for listbox #######################
+
+
+mylist=Listbox(result_frame,width=60,height=23,font="arial 10 bold")
+mylist.place(x=750,y=97)
+
+####### for createtion a input box ###########
+name=StringVar()
+box1=Entry(kishan,textvariable=name,font="arial 23 bold",width=25)
+box1.place(x=250,y=110)
+
+section=StringVar()
+box2=Entry(kishan,textvariable=section,font="arial 23 bold",width=25)
+box2.place(x=250,y=160)
+
+roll=StringVar()
+box3=Entry(kishan,textvariable=roll,font="arial 23 bold",width=25)
+box3.place(x=250,y=210)
+
+mobile=StringVar()
+box4=Entry(kishan,textvariable=mobile,font="arial 23 bold",width=25)
+box4.place(x=250,y=260)
+
+
+email=StringVar()
+box5=Entry(kishan,textvariable=email,font="arial 23 bold",width=25)
+box5.place(x=250,y=310)
+
+
+
+
+################## define function exit function ########################
+def exit():
+    exit=messagebox.askquestion("data entry form","Are You Want To Exit Application")
+    if exit=="yes":
+        kishan.destroy()
+    return
+
+######################## start sql work #######################3
+conn=sqlite3.connect("student.db")
+curs=conn.cursor()
+######### create a sql table ##################
+
+curs.execute("create table if not exists student(name,section,roll,mobile,email)")
+
+
+
+        ######################## define search function ###########################
+def search():
+    mylist.delete(0,END)
+    e=box5.get()
+    data=[(str(e))]
+    if e=="":
+        messagebox.showinfo("error","please input email")
+    else: 
+        k=0
+        result=curs.execute("select * from student where email=?",data) 
+        for p in result:
+            s=""
+            for i in p:
+                if str(i)=="":
+                    s=s+"  "+"NONE"
+                else: 
+                    s=s+"  "+str(i)
+            mylist.insert(1,s)
+            k=1
+        if k==0:
+            messagebox.showinfo("detail","email is not in table")
+    name.set("")
+    section.set("")
+    roll.set("")
+    mobile.set("")
+    email.set("")
+
+#################### define show all function ###############
+def show_all():
+    mylist.delete(0,END)
+    result=curs.execute("select * from student")
+    a=1
+    for p in result:
+        b=str(a)
+        s=b
+        for i in p: 
+            if str(i)=="":
+                s=s+"  "+"NONE"
+            else: 
+                s=s+"  "+str(i)
+        mylist.insert(END,s)
+        a+=1
+    name.set("")
+    section.set("")
+    roll.set("")
+    mobile.set("")
+    email.set("")
+################## define add function #####################
+
+def add_data():
+    a=box1.get()
+    b=box2.get()
+    c=box3.get()
+    d=box4.get()
+    e=box5.get()
+    i=0
+    checks=curs.execute("select email from student")
+    for k in checks:
+            if str(e) in k:
+                i=1
+                break
+    if e=="":
+        messagebox.showinfo("error detail","please input email")
+
+    elif i==1:
+        messagebox.showinfo("data detail","email is allready exist")      
+    else:
+        
+        values=[(a,b,c,d,e)]
+        curs.executemany("insert into student values(?,?,?,?,?)",values)
+        conn.commit()
+        search()
+        messagebox.showinfo("status","data added successfully")
+
+################# define delete function ##################
+def delete():
+    e=box5.get()
+    s=str(e)
+    values1=[(s)]
+    if s=="":
+        messagebox.showinfo("table error","please input email")
+    else:
+        i=0
+        check=curs.execute("select email from student")
+        for k in check:
+            if s in k:
+                curs.execute("delete from student where email=? ",values1)
+                conn.commit()
+                i+=1
+                messagebox.showinfo("status","data deleted sucessfully")
+                break
+        if(i==0):
+            messagebox.showinfo("status","email is not in table")
+
+    name.set("")
+    section.set("")
+    roll.set("")
+    mobile.set("")    
+    email.set("")
+    
+####################### define replace function #################
+def replace():
+    a=box1.get()
+    b=box2.get()
+    c=box3.get()
+    d=box4.get()
+    e=box5.get()
+    if e=="":
+        messagebox.showinfo("error","please enter email")
+    else:
+        l=0
+        check=curs.execute("select email from student")
+        for k in check:
+            if e in k: 
+                if a=="":
+                    data=[(str(e))]
+                    p=curs.execute("select name from student where email=?",data)
+                    for i in p: 
+                        a=i[0]
+                    
+                if b=="":
+                    data=[(str(e))]
+                    p=curs.execute("select section from student where email=?",data)
+                    for i in p: 
+                        b=i[0]
+                if c=="":
+                    data=[(str(e))]
+                    p=curs.execute("select roll from student where email=?",data)
+                    for i in p: 
+                        c=i[0]
+                if d=="":
+                    data=[(str(e))]
+                    p=curs.execute("select mobile from student where email=?",data)
+                    for i in p: 
+                        d=i[0]
+                values=[(a,b,c,d,e)]
+                curs.executemany("update student set name=?,section=?,roll=?,mobile=? where email=?",values)
+                conn.commit()
+                messagebox.showinfo("status","replace data sucessfully")
+                l+=1
+                search()
+                break
+        if(l==0):
+            messagebox.showinfo("status","email is not in table")
+        
+
+
+
+
+#conn.commit()
+#conn.close()
+
+######################## button #######################
+
+Button(kishan,text="delete",font="arial 15 bold",width=5,bg="red",command=delete).place(x=250,y=400)
+Button(kishan,text="replace",font="arial 15 bold",width=5,bg="green",command=replace).place(x=350,y=400)
+Button(kishan,text="search",font="arial 15 bold",width=5,bg="yellow",command=search).place(x=450,y=400)
+Button(kishan,text="exit",font="arial 15 bold",width=5,bg="red",command=exit).place(x=550,y=400)
+Button(kishan,text="add",font="arial 15 bold",width=15,bg="blue",command=add_data).place(x=370,y=470)
+Button(kishan,text="show all",font="arial 15 bold",width=20,bg="blue",command=show_all).place(x=830,y=500)
+
+
+kishan.mainloop()
